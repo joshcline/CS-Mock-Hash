@@ -4,6 +4,9 @@ const bcrypt = require('bcrypt')
 // This allows us to read from the terminal
 const readlineSync = require('readline-sync')
 
+// This allows us to save the datastore to a file
+const jsonfile = require('jsonfile')
+
 // We'll keep a global object to store usernames and password hashes
 let globalStore = {}
 
@@ -15,19 +18,19 @@ let globalStore = {}
 
 // function for checking a password
 checkPassword = async (username, plaintextPassword) => {
-    // TODO: Make sure to delete this console.log once you're done implementing the function!
-    console.log('\n Uh-oh, checkPassword is not yet implemented. 😢')
     // Ensure global store contains the user 
     // (this is a quick way to check if an object contains a key)
     if (globalStore[username]) {
-        // TODO: Use bcrypt's compare methof to compare a plaintext password to a password hash
+        // Use bcrypt's compare methof to compare a plaintext password to a password hash
+        let result = await bcrypt.compare(plaintextPassword, globalStore[username])
 
-        // TODO: The result variable is a boolean. True means the user was valid. Take action accordingly.
         if (result) {
-            // TODO: Display message for valid credentials
+            // Display message for valid credentials
+            console.log('\n✅ You have successfully logged in!\n')
         }
         else {
-            // TODO: Display message for invalid credentials
+            // Display message for invalid credentials
+            console.log('\n❌ Sorry, but your password is incorrect.\n')
         }
     }
     else {
@@ -37,14 +40,14 @@ checkPassword = async (username, plaintextPassword) => {
 }
 
 hashPassword = async (username, password) => {
-    // TODO: Make sure to delete this console.log once you're done implementing the function!
-    console.log('\nUh-oh, hashPassword is not yet implemented. 😢')
+    // Make the password hash using bcrypt
+    let passwordHash = await bcrypt.hash(password, 12)
 
-    // TODO: Make the password hash using bcrypt
+    // Add the user and password hash to the global store object
+    globalStore[username] = passwordHash
 
-    // TODO: Add the user and password hash to the global store object
-
-    // TODO: Print a status update including the username and password hash
+    // Print a status update including the username and password hash
+    console.log(`\n✅ User ${username} has been created with password hash ${passwordHash}\n`)
 }
 
 
@@ -70,6 +73,13 @@ createUser = async () => {
         // Add the user to our system
         await hashPassword(username, password)
     }
+}
+
+loadStore = () => {
+    // Load the global store object from a file
+    console.log(`\nLoading the store from a file...\n`)
+    globalStore = jsonfile.readFileSync('store.json')
+    console.log(`\nStore loaded!\n`)
 }
 
 loginUser = async () => {
@@ -102,6 +112,13 @@ viewStore = () => {
     console.log('\n==================================\n')
 }
 
+saveStore = () => {
+    // Save the global store object to a file
+    console.log(`\nSaving the store to a file...\n`)
+    jsonfile.writeFileSync('store.json', globalStore)
+    console.log(`\nStore saved!\n`)
+}
+
 // Program loop
 programLoop = async () => {
     while (true) {
@@ -113,14 +130,22 @@ programLoop = async () => {
             case 'create':
                 await createUser()
                 break
+            case 'load':
+                await loadStore()
+                break
             case 'login':
                 await loginUser()
+                break
+            case 'save':
+                await saveStore()
                 break
             case 'help':
                 console.log('\nYou can choose from the following actions:\n')
                 console.log('\tview: see all users')
                 console.log('\tcreate: add a new user')
                 console.log('\tlogin: login to a specific user')
+                console.log('\tload: load the store from a file')
+                console.log('\tsave: save the store to a file')
                 console.log('\thelp: show available commands')
                 console.log('\texit: quit this program\n\n')
                 break
